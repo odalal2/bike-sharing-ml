@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive data preparation and KNN demand forecasting with R in the browser, using UCI Bike Sharing data.">
+  <title>BikeShare | Demand Forecasting ML Lab</title>
+  <style>
+    :root { --bg:#f5f7fb;--ink:#13223b;--muted:#607087;--line:#dfe6ef;--blue:#2360cd;--teal:#077c85;--lime:#bff3d2;--red:#bd3950;--card:white;--shadow:0 8px 26px rgba(16,34,58,.06) }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Arial,sans-serif;line-height:1.45} button,input,select{font:inherit} a{color:var(--blue)} a:hover{text-decoration:underline}
+    header{background:linear-gradient(110deg,#102947 0%,#12475c 72%,#087b83 100%);color:white;padding:36px max(22px,calc((100vw - 1130px)/2)) 40px}
+    .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:2.3px;font-weight:750;color:#b6f1df}.headline{font-size:clamp(29px,4vw,43px);line-height:1.11;letter-spacing:-1.4px;margin:14px 0}.subline{max-width:680px;color:#d3e2eb;margin:0 0 20px;font-size:15px}
+    .hero-pill{display:inline-flex;align-items:center;border:1px solid #7dbbb5;background:rgba(255,255,255,.08);border-radius:40px;padding:7px 12px;color:#e8fff2;font-size:12px;margin-right:8px;margin-bottom:8px}
+    main{max-width:1174px;margin:-20px auto 55px;padding:0 22px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:24px;margin-bottom:16px}.step{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);font-weight:800;margin:0 0 4px}.row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.two{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}h2{font-size:22px;letter-spacing:-.5px;margin:0 0 8px}h3{font-size:15px;margin:0 0 8px}.help{font-size:13px;color:var(--muted);margin:6px 0 15px}.hint{font-size:12px;color:var(--muted)}
+    .uploadbox{display:flex;align-items:center;gap:15px;padding:17px;background:#f8fbff;border:1.5px dashed #9cb5d3;border-radius:13px;cursor:pointer;margin:17px 0 10px}.uploadbox strong{display:block;font-size:15px}.uploadbox small{color:var(--muted)}.uploadbox:hover{border-color:var(--blue);background:#f1f7ff}.uploadbox svg{flex-shrink:0}.filesrc{font-size:12px}.btn{border:0;border-radius:9px;background:var(--blue);padding:11px 16px;color:#fff;font-weight:750;cursor:pointer}.btn:hover{filter:brightness(.92)}.btn:disabled{background:#9aacbd;cursor:not-allowed;filter:none}.btn.alt{background:#e9f0fb;color:#214d94}.btn.light{background:#e5f5f0;color:#08665b}.btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .stat{border:1px solid #e6eaf0;border-radius:12px;padding:14px 16px;background:#fbfcff}.stat label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block}.stat strong{font-size:26px;letter-spacing:-.9px;font-variant-numeric:tabular-nums}.stat small{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+    .notice{padding:12px 14px;border-radius:10px;background:#f0f8f8;border:1px solid #c7e9e4;color:#25605b;font-size:12px}.notice.warning{background:#fff8e7;border-color:#ecd9a3;color:#766020}.notice.error{background:#fff1f3;border-color:#f0c5cd;color:#982d43}.pill{border-radius:100px;font-size:11px;font-weight:750;background:#ecf3fa;padding:6px 10px;color:#275680}.pill.good{background:#e4f6ed;color:#116847}.pill.wait{background:#fff4df;color:#8c5f0b}
+    .tablewrap{overflow:auto;max-height:310px;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th{position:sticky;top:0;background:#eef4fb;color:#2a4e76;text-align:left}td,th{padding:10px 12px;border-bottom:1px solid #ebeff5}tr:last-child td{border-bottom:0}tr:nth-child(even){background:#fbfcfe}.sectionhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}.chart{display:block;width:100%;height:auto;background:#fbfdff;border:1px solid #e5edf5;border-radius:11px}.legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:middle}
+    .checkgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.check{display:flex;gap:8px;align-items:start;border:1px solid #e3eaf2;background:#fbfcff;padding:12px;border-radius:9px;font-size:13px}.check b{display:block}.check span{color:var(--muted);font-size:11px}.check .checkicon{color:#0f8b70;font-size:18px;font-weight:800;line-height:1}.micro{font-size:12px;color:var(--muted)}details{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:15px}summary{cursor:pointer;font-weight:650;font-size:13px}pre{overflow:auto;padding:12px;background:#10253e;color:#e6f3ff;border-radius:9px;font-size:11px;white-space:pre;max-height:320px}.progress{display:none;min-height:32px;align-items:center;gap:9px;color:var(--muted);font-size:12px}.spinner{width:14px;height:14px;border:2px solid #cbdae9;border-top-color:#2360cd;border-radius:100%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    select{background:white;border:1px solid #baccdc;border-radius:9px;padding:10px 12px;color:#193755}fieldset{border:0;padding:0;margin:0}.result{display:none}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}.resultbox{padding:16px;border-radius:11px;background:#eef8f7;border:1px solid #c9e9e0}.resultbox small{display:block;color:#426b68}.resultbox strong{font-size:28px;letter-spacing:-.9px}footer{font-size:11px;color:var(--muted);text-align:center;padding:0 15px 32px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+    @media(max-width:790px){.two,.three{grid-template-columns:1fr}.checkgrid{grid-template-columns:1fr}.card{padding:18px}.headline{letter-spacing:-.7px}header{padding-top:28px}main{margin-top:-15px}.kpis{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">ISE 423 &nbsp; / &nbsp; Interactive Machine Learning Lab</div>
+  <h1 class="headline">Forecast bike-sharing demand<br>with R in your browser.</h1>
+  <p class="subline">Import real hourly rental data, examine its quality and features, and train a K-nearest neighbors regression model. Built for the UCI Bike Sharing case study.</p>
+  <span class="hero-pill">R + webR</span><span class="hero-pill">Real-world dataset</span><span class="hero-pill">No RStudio installation</span>
+</header>
+<main>
+  <section class="card" id="import-card">
+    <p class="step">Step 01 · Data requirements</p>
+    <div class="row"><div><h2>Import the dataset</h2><p class="help">Download the official <b>hour.csv</b> file from UCI, then upload it here. The file stays in your browser.</p></div><span class="pill" id="importStatus">Awaiting CSV</span></div>
+    <label class="uploadbox" for="dataFile">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2360cd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V3m0 0-5 5m5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>
+      <div><strong id="filename">Choose the file hour.csv</strong><small>Click to upload a CSV file from your computer</small></div>
+      <input type="file" id="dataFile" accept=".csv,text/csv" class="sr-only">
+    </label>
+    <div class="row"><div class="filesrc">Source: <a href="https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset" target="_blank" rel="noopener noreferrer">UCI Bike Sharing Dataset ↗</a> &nbsp;•&nbsp; Fanaee-T (2013), CC BY 4.0</div><div class="hint">Use the original <b>hour.csv</b>, not day.csv</div></div>
+    <div id="message" class="notice warning" style="margin-top:14px">Upload hour.csv to activate the data preview and ML experiment. This page requires internet access to start webR when running the model.</div>
+  </section>
+
+  <section class="card">
+    <p class="step">Step 02 · Explore</p>
+    <h2>Understand the data</h2>
+    <div class="three" style="margin:17px 0">
+      <div class="stat"><label>Observations</label><strong id="obs">—</strong><small>hourly records</small></div>
+      <div class="stat"><label>Variables</label><strong id="cols">—</strong><small>original CSV columns</small></div>
+      <div class="stat"><label>Date range</label><strong id="dateRange" style="font-size:17px">—</strong><small>covered period</small></div>
+    </div>
+    <div class="two">
+      <div><div class="sectionhead"><h3>Hourly rental pattern</h3><span class="hint">Average observed rentals by hour</span></div><svg id="demandChart" viewBox="0 0 620 295" class="chart" aria-label="Bar chart of hourly rental averages" role="img"></svg><p class="micro" id="chart-caption">Import data to display a chart.</p></div>
+      <div><h3>Variables in our project</h3><div class="checkgrid">
+        <div class="check"><span class="checkicon">✓</span><div><b>Target</b><span>cnt: total hourly rentals</span></div></div>
+        <div class="check"><span class="checkicon">✓</span><div><b>Time</b><span>hr, weekday, mnth, yr</span></div></div>
+        <div class="check"><span class="checkicon">✓</span><div><b>Weather</b><span>temp, hum, windspeed, weathersit</span></div></div>
+        <div class="check"><span class="checkicon">✓</span><div><b>Calendar</b><span>holiday, workingday, season</span></div></div>
+      </div><div class="notice warning" style="margin-top:13px"><b>Prevent data leakage:</b> do not use <code>casual</code> or <code>registered</code> to predict <code>cnt</code>, because <code>cnt = casual + registered</code>.</div></div>
+    </div>
+    <h3 style="margin-top:20px">Preview: first 8 rows</h3><div class="tablewrap" id="dataTable"><div class="help" style="padding:13px">No CSV uploaded yet.</div></div>
+  </section>
+
+  <section class="card">
+    <p class="step">Step 03 · Preparation</p>
+    <div class="row"><div><h2>Prepare the data for ML</h2><p class="help">See the checks performed on your uploaded CSV. No statistics are pre-filled or invented.</p></div><button id="exportBtn" disabled class="btn alt">Export prepared CSV</button></div>
+    <div class="kpis">
+      <div class="stat"><label>Missing cells</label><strong id="missing">—</strong><small>all original columns</small></div>
+      <div class="stat"><label>Duplicate time keys</label><strong id="duplicates">—</strong><small>same date and hour</small></div>
+      <div class="stat"><label>Usable observations</label><strong id="usable">—</strong><small>complete target + ML features</small></div>
+    </div>
+    <div class="checkgrid">
+      <div class="check"><span class="checkicon">1</span><div><b>Import and inspect</b><span>Read CSV; verify required columns and missing cells</span></div></div>
+      <div class="check"><span class="checkicon">2</span><div><b>Identify inputs and target</b><span>Separate predictors from cnt and drop leakage columns</span></div></div>
+      <div class="check"><span class="checkicon">3</span><div><b>Remove incomplete model rows</b><span>Only if required columns contain missing values</span></div></div>
+      <div class="check"><span class="checkicon">4</span><div><b>Chronological train/test</b><span>Earlier 80% training, later 20% testing</span></div></div>
+    </div>
+    <div class="notice" style="margin-top:13px">Data for future dates should use <b>weather forecasts</b>, not weather observations recorded afterward. The sample evaluation here uses observed weather to demonstrate regression, not an operational advance forecast.</div>
+    <details><summary>See the R code for data preparation</summary><pre id="prepCode"># Run when hour.csv is imported\nbike <- read.csv("hour.csv")\nfeatures <- c("yr","mnth","hr","holiday","weekday","workingday","weathersit","temp","hum","windspeed","season")\nbike <- bike[order(as.Date(bike$dteday), bike$hr), ]\nmodel_data <- bike[complete.cases(bike[,c(features,"cnt")]), c("dteday",features,"cnt")]\nsplit <- floor(0.8 * nrow(model_data))\ntrain <- model_data[1:split, ]\ntest <- model_data[(split+1):nrow(model_data), ]</pre></details>
+  </section>
+
+  <section class="card">
+    <p class="step">Step 04 · Model experiment</p>
+    <h2>Run an ML model in R</h2>
+    <p class="help">Train a <b>K-Nearest Neighbors (KNN) regression</b> model and evaluate predictions against actual bike rentals. The calculations run in R through webR, not in a pre-recorded simulation.</p>
+    <div class="row" style="margin:15px 0"><div class="btnrow"><label for="neighbors" style="font-size:13px;font-weight:650">Number of neighbors (k)</label><select id="neighbors"><option value="3">3</option><option selected value="5">5</option><option value="7">7</option><option value="11">11</option></select><button id="runBtn" disabled class="btn">Train & evaluate in R</button></div><span class="pill wait" id="engineStatus">R engine not started</span></div>
+    <div class="progress" id="progress"><span class="spinner"></span><span id="progressText">Starting R...</span></div>
+    <div class="notice warning" id="modelNote">Teaching-friendly KNN experiment: chronological 80/20 split; up to 3,000 recent training rows and up to 250 early test rows for browser performance. Metrics only describe the evaluated subset.</div>
+    <div class="result" id="results">
+      <div class="three" style="margin-top:14px"><div class="resultbox"><small>MAE · average absolute error</small><strong id="mae">—</strong></div><div class="resultbox"><small>RMSE · root mean squared error</small><strong id="rmse">—</strong></div><div class="resultbox"><small>MAPE · excludes actual=0</small><strong id="mape">—</strong></div></div>
+      <p class="micro" id="sampleInfo"></p>
+      <div class="sectionhead" style="margin-top:20px"><h3>Actual vs. predicted rentals</h3><span class="hint">Test observations in chronological order</span></div>
+      <svg id="forecastChart" class="chart" viewBox="0 0 900 300" aria-label="Actual versus predicted rentals" role="img"></svg>
+      <div class="legend"><span><i class="dot" style="background:#1660bd"></i>Actual</span><span><i class="dot" style="background:#0a9a8f"></i>Predicted by KNN</span></div>
+      <div class="btnrow" style="margin-top:18px"><button class="btn light" id="downloadPred">Download prediction results CSV</button></div>
+    </div>
+  </section>
+  <section class="card"><h3>Using this lab for your presentation</h3><p class="help" style="margin-bottom:0">For <b>Part 2 — Data Requirements & Preparation</b>, use the dataset size, feature categories, actual missing-value and duplicate checks, data preview, and hourly rental plot. For the later implementation and evaluation sections, run KNN and report its <b>actual displayed metrics</b>. Do not claim this teaching subset represents a full production forecast.</p></section>
+</main>
+<footer>UCI Bike Sharing Dataset © Hadi Fanaee-T (2013), CC BY 4.0 · WebR executes locally in your browser · This is an independent educational demonstration, not the instructor's original application.</footer>
+
+<script type="module">
+  const $ = id => document.getElementById(id);
+  const FEATURES = ['yr','mnth','hr','holiday','weekday','workingday','weathersit','temp','hum','windspeed','season'];
+  const REQUIRED = ['dteday','cnt',...FEATURES];
+  let rows=[], header=[], rawFile=null, prepared=[], modelCSV='';
+  let webR=null, starting=null, busy=false;
+  const num=x=> {const n=Number(x);return Number.isFinite(n)?n:NaN};
+  const fmt=n=>Number(n).toLocaleString('en-US');
+  const showMessage=(msg,cls='warning')=>{$('message').textContent=msg;$('message').className='notice '+cls};
+  function csvParse(text){
+    const out=[];let rec=[],cell='',quoted=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];if(c==='"'){if(quoted && text[i+1]==='"'){cell+='"';i++}else quoted=!quoted;}
+      else if(c===','&&!quoted){rec.push(cell);cell='';}
+      else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;rec.push(cell);if(rec.some(x=>x!==''))out.push(rec);rec=[];cell='';}
+      else cell+=c;
+    }rec.push(cell);if(rec.some(x=>x!==''))out.push(rec);return out;
+  }
+  const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+  function renderTable(){const cols=header.slice(0,17);const data=rows.slice(0,8);$('dataTable').innerHTML='<table><thead><tr>'+cols.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+data.map(r=>'<tr>'+cols.map(c=>'<td>'+esc(r[c]??'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
+  function plotBar(data){
+    const svg=$('demandChart');const w=620,h=295,left=52,right=18,top=24,bottom=43,bw=(w-left-right)/24,max=Math.max(1,...data)*1.12;
+    let s='';for(let t=0;t<=4;t++){let y=h-bottom-t*(h-top-bottom)/4;s+=`<line x1="${left}" x2="${w-right}" y1="${y}" y2="${y}" stroke="#e2eaf4"/><text x="${left-9}" y="${y+4}" text-anchor="end" font-size="10" fill="#6f8094">${Math.round(max*t/4)}</text>`}
+    data.forEach((v,i)=>{const x=left+i*bw+2;const bh=(v/max)*(h-top-bottom);s+=`<rect x="${x}" y="${h-bottom-bh}" width="${Math.max(3,bw-5)}" height="${bh}" rx="3" fill="${i>=7&&i<=9||i>=16&&i<=19?'#07898b':'#4377bb'}"/>`;if(i%3===0)s+=`<text x="${x+(bw-5)/2}" y="${h-22}" text-anchor="middle" font-size="10" fill="#6d7d91">${String(i).padStart(2,'0')}</text>`});s+=`<text x="${w/2}" y="${h-6}" font-size="11" fill="#63758b" text-anchor="middle">Hour of day (0–23)</text>`;svg.innerHTML=s;
+  }
+  function linePlot(actual,pred){
+    const svg=$('forecastChart');const w=900,h=300,l=55,r=18,t=20,b=35;
+    const hi=Math.max(1,...actual,...pred)*1.08;const p=(v,i,n)=>[l+i*(w-l-r)/Math.max(1,n-1),h-b-(v/hi)*(h-t-b)];
+    let s='';for(let n=0;n<=4;n++){let y=h-b-n*(h-t-b)/4;s+=`<line x1="${l}" y1="${y}" x2="${w-r}" y2="${y}" stroke="#e2eaf4"/><text x="${l-10}" y="${y+4}" text-anchor="end" fill="#718096" font-size="11">${Math.round(hi*n/4)}</text>`}
+    for(const [series,color] of [[actual,'#1660bd'],[pred,'#0a9a8f']]){const coords=series.map((v,i)=>p(v,i,series.length).join(',')).join(' ');s+=`<polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${coords}"/>`}
+    s+=`<text x="${w/2}" y="${h-5}" text-anchor="middle" font-size="11" fill="#6a7a8a">Test observations (chronological order)</text>`;svg.innerHTML=s;
+  }
+  function resetModels(){ $('results').style.display='none';$('modelNote').textContent='Teaching-friendly KNN experiment: chronological 80/20 split; up to 3,000 recent training rows and up to 250 early test rows for browser performance. Metrics only describe the evaluated subset.'; }
+  async function readFile(file){
+    if(!file)return;try{
+      const text=await file.text(); const records=csvParse(text);if(records.length<25)throw Error('The CSV has too few observations. Choose the original hourly dataset.');
+      header=records[0].map(s=>s.trim().replace(/^\uFEFF/,'')); const absent=REQUIRED.filter(k=>!header.includes(k));
+      if(absent.length)throw Error('This file is missing required columns: '+absent.join(', ')+'. Please upload UCI hour.csv.');
+      rows=records.slice(1).map(r=>Object.fromEntries(header.map((h,i)=>[h,r[i]??''])));rawFile=file;
+      const missing=rows.reduce((acc,r)=>acc+header.filter(k=>r[k]===undefined||r[k]===null||String(r[k]).trim()==='').length,0);
+      const keys=new Set();let duplicate=0;for(const row of rows){const key=row.dteday+'|'+row.hr;if(keys.has(key))duplicate++;else keys.add(key)}
+      // For numeric features, check all numeric. For dates use the standard ISO date format.
+      prepared=rows.filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.dteday) && ['cnt',...FEATURES].every(k=>r[k]!==''&&Number.isFinite(num(r[k]))));
+      prepared.sort((a,b)=>a.dteday.localeCompare(b.dteday) || num(a.hr)-num(b.hr));
+      if(prepared.length<30)throw Error('Not enough usable rows with the required predictors.');
+      $('filename').textContent=file.name;$('importStatus').textContent='CSV imported';$('importStatus').className='pill good';
+      $('obs').textContent=fmt(rows.length);$('cols').textContent=fmt(header.length);
+      const allDates=rows.map(r=>r.dteday).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();$('dateRange').textContent=(allDates[0]||'?')+' → '+(allDates[allDates.length-1]||'?');
+      $('missing').textContent=fmt(missing);$('duplicates').textContent=fmt(duplicate);$('usable').textContent=fmt(prepared.length);
+      const hours=Array.from({length:24},()=>[0,0]); for(const row of prepared){const h=num(row.hr);if(h>=0&&h<24){hours[h][0]+=num(row.cnt);hours[h][1]++}}
+      plotBar(hours.map(([sum,n])=>n?sum/n:0)); $('chart-caption').textContent='Mean recorded rentals for each hour across the imported dataset. Descriptive chart — not an ML forecast.';
+      renderTable();$('runBtn').disabled=false;$('exportBtn').disabled=false;resetModels();
+      showMessage('Imported '+fmt(rows.length)+' records. Missing cells: '+fmt(missing)+'. Duplicate date-hour keys: '+fmt(duplicate)+'. Data exploration is ready.','');
+    }catch(e){rawFile=null;rows=[];prepared=[];$('runBtn').disabled=true;$('exportBtn').disabled=true;$('importStatus').textContent='Import error';$('importStatus').className='pill wait';showMessage(e.message,'error')}
+  }
+  $('dataFile').addEventListener('change',e=>readFile(e.target.files[0]));
+  function downloadBlob(content,name,type){const blob=content instanceof Blob?content:new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+  function csvCell(x){let v=String(x??'');return /[",\r\n]/.test(v)?'"'+v.replaceAll('"','""')+'"':v}
+  $('exportBtn').addEventListener('click',()=>{
+    const cols=['dteday',...FEATURES,'cnt'];const text=cols.join(',')+'\n'+prepared.map(r=>cols.map(k=>csvCell(r[k])).join(',')).join('\n');
+    downloadBlob(text,'bike_sharing_prepared.csv','text/csv;charset=utf-8');
+  });
+  async function getWebR(){
+    if(webR)return webR;if(starting)return starting;
+    starting=(async()=>{ $('engineStatus').textContent='Loading webR...';$('progressText').textContent='Downloading R runtime (first use can take time)...';
+      const {WebR}=await import('https://webr.r-wasm.org/latest/webr.mjs');const wr=new WebR({interactive:false});await wr.init();webR=wr;$('engineStatus').textContent='R engine ready';$('engineStatus').className='pill good';return wr;
+    })();try{return await starting}catch(e){starting=null;$('engineStatus').textContent='R unavailable';$('engineStatus').className='pill wait';throw e}
+  }
+  function parseRText(text){const obj={};for(const line of text.split('\n')){const p=line.indexOf('=');if(p>-1)obj[line.slice(0,p)]=line.slice(p+1)}return obj}
+  async function train(){if(!rawFile||busy)return;busy=true;$('runBtn').disabled=true;$('progress').style.display='flex';$('results').style.display='none';try{
+    const wr=await getWebR();$('progressText').textContent='Copying your CSV into the R virtual file system...';
+    await wr.FS.writeFile('/home/web_user/bike_hour.csv',new Uint8Array(await rawFile.arrayBuffer()));
+    const k=Number($('neighbors').value);
+    $('progressText').textContent='R is preparing features, splitting dates, and fitting KNN...';
+    const code=`
+      bike <- read.csv('/home/web_user/bike_hour.csv', stringsAsFactors=FALSE)
+      fs <- c('yr','mnth','hr','holiday','weekday','workingday','weathersit','temp','hum','windspeed','season')
+      keep <- c('dteday', fs, 'cnt')
+      bike <- bike[complete.cases(bike[,keep]),keep]
+      bike$dteday <- as.Date(bike$dteday)
+      bike <- bike[!is.na(bike$dteday),]
+      bike <- bike[order(bike$dteday, bike$hr),]
+      cut <- floor(0.8 * nrow(bike))
+      full_training <- bike[seq_len(cut), ]
+      full_test <- bike[seq.int(cut+1,nrow(bike)), ]
+      training <- tail(full_training, min(3000L,nrow(full_training)))
+      testing <- head(full_test, min(250L,nrow(full_test)))
+      xtr <- as.matrix(training[,fs]); xte <- as.matrix(testing[,fs]); storage.mode(xtr) <- 'double'; storage.mode(xte) <- 'double'
+      mu <- colMeans(xtr); sigma <- apply(xtr,2,sd); sigma[!is.finite(sigma) | sigma==0] <- 1
+      xtr <- sweep(sweep(xtr,2,mu,'-'),2,sigma,'/')
+      xte <- sweep(sweep(xte,2,mu,'-'),2,sigma,'/')
+      yy <- training$cnt
+      knn_predict <- function(xx,k) {
+        apply(xx,1,function(v) {
+          dd <- rowSums((xtr - matrix(v,nrow=nrow(xtr),ncol=ncol(xtr),byrow=TRUE))^2)
+          mean(yy[order(dd)[seq_len(min(k,length(dd)))]])
+        })
+      }
+      pred <- as.numeric(knn_predict(xte,${k}L)); actual <- as.numeric(testing$cnt)
+      mae <- mean(abs(actual-pred)); rmse <- sqrt(mean((actual-pred)^2))
+      positive <- actual > 0
+      mape <- if(any(positive)) mean(abs((actual[positive]-pred[positive])/actual[positive]))*100 else NA_real_
+      out <- c(
+        paste0('mae=',sprintf('%.4f',mae)),
+        paste0('rmse=',sprintf('%.4f',rmse)),
+        paste0('mape=',sprintf('%.4f',mape)),
+        paste0('train=',nrow(training)),
+        paste0('test=',nrow(testing)),
+        paste0('split=',cut),
+        paste0('total=',nrow(bike)),
+        paste0('actual=',paste(actual,collapse=',')),
+        paste0('predicted=',paste(sprintf('%.4f',pred),collapse=',')),
+        paste0('dates=',paste(format(testing$dteday,'%Y-%m-%d'),collapse=',')),
+        paste0('hours=',paste(testing$hr,collapse=','))
+      )
+      paste(out,collapse='\\n')
+    `;
+    // evalRString evaluates the R expression and returns a single string result.
+    const output=await wr.evalRString(code);const info=parseRText(output);
+    const actual=info.actual.split(',').map(Number);const pred=info.predicted.split(',').map(Number);
+    if(!actual.length||actual.some(x=>!Number.isFinite(x))||pred.some(x=>!Number.isFinite(x)))throw Error('Could not parse valid predictions from R.');
+    $('mae').textContent=Number(info.mae).toFixed(2);$('rmse').textContent=Number(info.rmse).toFixed(2);$('mape').textContent=Number(info.mape).toFixed(2)+'%';
+    $('sampleInfo').textContent='Chronological 80/20 split of '+fmt(info.total)+' complete records (first '+fmt(info.split)+' for training). Browser experiment used '+fmt(info.train)+' latest training observations and '+fmt(info.test)+' earliest test observations; k='+k+'.';
+    $('modelNote').textContent='The KNN model used only time, calendar and recorded weather inputs, never casual or registered counts. This is an educational conditional-demand estimate; advance forecasting needs weather forecasts.';
+    linePlot(actual,pred);$('results').style.display='block';
+    const dates=info.dates.split(',');const hours=info.hours.split(',');modelCSV='date,hour,actual_count,predicted_count\n'+actual.map((v,i)=>[dates[i],hours[i],v,pred[i]].join(',')).join('\n');
+    $('progressText').textContent='Model evaluation complete.';$('engineStatus').textContent='Model executed in R';$('engineStatus').className='pill good';
+  }catch(e){$('modelNote').textContent='Could not run the R model: '+(e?.message||String(e))+'. Make sure you are online and hosting the page over HTTPS (for example via GitHub Pages).';$('modelNote').className='notice error';$('engineStatus').textContent='R run failed';$('engineStatus').className='pill wait';}
+  finally{busy=false;$('progress').style.display='none';$('runBtn').disabled=!rawFile}
+  }
+  $('runBtn').addEventListener('click',train);
+  $('downloadPred').addEventListener('click',()=>{if(modelCSV)downloadBlob(modelCSV,'bike_knn_predictions.csv','text/csv;charset=utf-8')});
+</script>
+</body>
+</html>
