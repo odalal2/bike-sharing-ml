@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bike Sharing | R Coding Lab</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#192e48}
+header{background:#122f49;color:white;padding:20px 28px}
+header h1{margin:4px 0;font-size:26px}
+header p{margin:5px 0;color:#cde3ee}
+a{color:#b9f3ee}
+.layout{display:grid;grid-template-columns:210px 1fr;gap:15px;padding:16px;max-width:1700px;margin:auto}
+nav,.panel{background:white;border:1px solid #dbe4ed;border-radius:14px;padding:15px}
+nav button{display:block;width:100%;text-align:left;border:1px solid #dde5ee;border-radius:9px;background:#f7faff;padding:11px;margin:8px 0;color:#1b3753;cursor:pointer}
+nav button.active{background:#dff1ff;border-color:#3284bd;font-weight:bold}
+main{min-width:0}
+.work{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+h2{margin:0 0 8px;font-size:21px}
+.hint{font-size:13px;color:#61738a;min-height:34px}
+.label{font-size:12px;color:#526c85;font-weight:bold;margin:8px 0}
+.editor{width:100%;height:58vh;min-height:370px;background:#10243c;color:#f0f6ff;border:0;border-radius:10px;padding:16px;font:14px/1.6 Consolas,monospace;resize:vertical;tab-size:2}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 Consolas,monospace;background:#f5f8fc;border:1px solid #dce5ef;border-radius:10px;padding:14px;height:32vh;min-height:220px;overflow:auto}
+.plots{display:grid;gap:10px}
+.plots canvas{max-width:100%;height:auto;background:white;border:1px solid #dce5ef;border-radius:10px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin:10px 0}
+button.action{padding:10px 13px;border:0;border-radius:8px;background:#235dc7;color:white;font-weight:bold;cursor:pointer}
+button.secondary{background:#e5effb;color:#215399}
+button:disabled{opacity:.5;cursor:wait}
+.status{font-size:13px;font-weight:bold;color:#146d4c}
+.warning{font-size:12px;color:#8d581b;background:#fff4db;padding:9px;border-radius:7px}
+.small{color:#62738a;font-size:12px}
+@media(max-width:1050px){.work{grid-template-columns:1fr}}
+@media(max-width:650px){.layout{grid-template-columns:1fr}nav{display:flex;overflow:auto;gap:6px}nav button{min-width:155px}.editor{height:300px;min-height:300px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="small" style="color:#b9f3ee">ISE 423 · MACHINE LEARNING PROJECT</div>
+  <h1>Bike-Sharing · R Coding Workspace</h1>
+  <p><span id="status" class="status" style="color:#a6eed0">Loading dataset…</span> · <a href="./index.html">Back to project</a></p>
+</header>
+<div class="layout">
+<nav id="tabs" aria-label="Presentation parts"></nav>
+<main class="panel">
+  <h2 id="title">Choose your project part</h2>
+  <p id="hint" class="hint"></p>
+  <div class="work">
+    <section>
+      <div class="label">R CODE EDITOR · edit here</div>
+      <textarea id="code" class="editor" spellcheck="false" aria-label="R code editor"></textarea>
+      <div class="actions">
+        <button class="action" id="run">▶ Run R code</button>
+        <button class="action secondary" id="save">↓ Download .R</button>
+        <button class="action secondary" id="reset">Reset example</button>
+      </div>
+      <div class="small">Changes are saved in this browser. Use Download .R to share your code with the group.</div>
+    </section>
+    <section>
+      <div class="label">R CONSOLE OUTPUT</div>
+      <pre id="output">Select a part and click Run R code.</pre>
+      <div class="label">PLOTS</div>
+      <div id="plots" class="plots"></div>
+    </section>
+  </div>
+  <p class="warning">For a real future forecast, use weather forecasts rather than weather observations from the future. This lab is for learning and testing.</p>
+</main>
+</div>
+<script type="module">
+const $=id=>document.getElementById(id);
+const parts=[
+ {name:'1 · Introduction',desc:'Understand bike rental demand.',code:`cat('Bike-Sharing Demand Forecasting\\n')
+cat('Observations:', nrow(bike), '\\n')
+summary(bike$cnt)
+hourly <- aggregate(cnt ~ hr, bike, mean)
+plot(hourly$hr, hourly$cnt, type='b', col='steelblue',
+     xlab='Hour', ylab='Average rentals', main='Demand by hour')`},
+ {name:'2 · Data Preparation',desc:'Inspect the data, identify features and check missing values.',code:`cat('Dataset dimensions:')
+print(dim(bike))
+cat('Column names:')
+print(names(bike))
+cat('Missing values:', sum(is.na(bike)), '\\n')
+cat('Duplicate date-hour records:',
+    sum(duplicated(bike[c('dteday','hr')])), '\\n')
+print(head(bike[,c('dteday','hr','temp','hum','cnt')]))
+# Target: cnt. Do not use casual or registered as predictors.
+print(table(bike$workingday))`},
+ {name:'3 · ML Models',desc:'Explore candidate features and compare model ideas.',code:`cat('Candidate methods: linear regression, KNN, random forest\\n')
+cat('Correlations with observed rentals:')
+print(cor(bike[c('cnt','temp','hum','windspeed')]))
+plot(bike$temp, bike$cnt, pch=16, cex=.2,
+     col='steelblue', xlab='Normalized temperature',
+     ylab='Rentals', main='Temperature vs demand')`},
+ {name:'4 · Implementation',desc:'Train a basic KNN regression example on a chronological sample.',code:`n <- nrow(bike)
+cutoff <- floor(.8*n)
+train <- tail(bike[1:cutoff, ], 1000)
+test <- head(bike[(cutoff+1):n, ], 150)
+features <- c('hr','weekday','temp','hum','windspeed',
+              'workingday','holiday')
+centers <- sapply(train[features],mean)
+spreads <- sapply(train[features],sd)
+spreads[spreads == 0] <- 1
+x_train <- scale(as.matrix(train[features]), centers, spreads)
+x_test <- scale(as.matrix(test[features]), centers, spreads)
+knn_predict <- function(row, k=5) {
+  d <- rowSums(sweep(x_train, 2, row, '-')^2)
+  mean(train$cnt[order(d)[1:k]])
+}
+pred <- apply(x_test, 1, knn_predict)
+actual <- test$cnt
+cat('KNN predictions generated:', length(pred), '\\n')
+plot(actual, pred, xlab='Actual', ylab='Predicted',
+     main='KNN example', col='steelblue', pch=16)
+abline(0,1,col='red')`},
+ {name:'5 · Model Evaluation',desc:'Run Part 4 first in this browser session, then calculate errors.',code:`if (!exists('pred') || !exists('actual')) {
+  stop('Run Part 4 first to create pred and actual.')
+}
+MAE <- mean(abs(actual-pred))
+RMSE <- sqrt(mean((actual-pred)^2))
+positive <- actual>0
+MAPE <- mean(abs((actual[positive]-pred[positive]) /
+                 actual[positive]))*100
+print(data.frame(MAE=MAE,RMSE=RMSE,MAPE=MAPE))
+plot(actual, type='l', col='steelblue',
+     main='Actual vs predicted rentals', ylab='Rentals')
+lines(pred,col='tomato')
+legend('topright',c('Actual','Predicted'),
+       col=c('steelblue','tomato'),lty=1)`},
+ {name:'6 · Applications',desc:'Identify demand peaks and practical business implications.',code:`hourly <- aggregate(cnt ~ hr, bike, mean)
+cat('Highest-demand hour:')
+print(hourly[which.max(hourly$cnt),])
+print(head(hourly[order(-hourly$cnt),],5))
+barplot(hourly$cnt, names.arg=hourly$hr,
+        col='teal', main='Average rentals by hour',
+        xlab='Hour', ylab='Average rentals')`}
+];
+let selected=1, webR=null, pending=null, data=null, busy=false;
+const drafts=parts.map((p,i)=>{
+ try{return localStorage.getItem('bike-r-part-'+i)??p.code}
+ catch{return p.code}
+});
+function switchPart(i){drafts[selected]=$('code').value;selected=i;$('title').textContent=parts[i].name;$('hint').textContent=parts[i].desc;$('code').value=drafts[i];$('output').textContent='Click Run R code to see output.';$('plots').replaceChildren();[...$('tabs').children].forEach((b,j)=>b.classList.toggle('active',i===j));}
+parts.forEach((part,i)=>{const b=document.createElement('button');b.textContent=part.name;b.onclick=()=>switchPart(i);$('tabs').append(b)});
+$('code').value=drafts[selected];switchPart(1);
+$('code').addEventListener('input',()=>{drafts[selected]=$('code').value;try{localStorage.setItem('bike-r-part-'+selected,drafts[selected])}catch{}});
+$('code').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart,t=e.target.selectionEnd;e.target.setRangeText('  ',s,t,'end');e.target.dispatchEvent(new Event('input'))}});
+$('reset').onclick=()=>{$('code').value=parts[selected].code;$('code').dispatchEvent(new Event('input'))};
+$('save').onclick=()=>{const blob=new Blob([$('code').value],{type:'text/plain'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='BikeSharing_Part_'+(selected+1)+'.R';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+async function loadData(){try{const r=await fetch('./hour.csv',{cache:'no-store'});if(!r.ok)throw Error('hour.csv missing');data=new Uint8Array(await r.arrayBuffer());$('status').textContent='hour.csv ready · shared dataset';}catch(e){$('status').textContent='Dataset unavailable: '+e.message;$('output').textContent='Check that hour.csv is in the same GitHub repository folder as editor.html.'}}
+async function getR(){if(webR)return webR;if(!pending)pending=(async()=>{const {WebR}=await import('https://webr.r-wasm.org/latest/webr.mjs');const wr=new WebR({interactive:false});await wr.init();await wr.FS.writeFile('/home/web_user/hour.csv',data);await wr.evalRVoid("bike <- read.csv('/home/web_user/hour.csv'); bike <- bike[order(bike$dteday,bike$hr),]");webR=wr;return wr})();return pending}
+$('run').onclick=async()=>{if(busy)return;if(!data){$('output').textContent='hour.csv was not loaded.';return}busy=true;$('run').disabled=true;$('output').textContent='Starting R / running code…';$('plots').replaceChildren();let shelter;try{const wr=await getR();shelter=await new wr.Shelter();const res=await shelter.captureR($('code').value,{withAutoprint:true});$('output').textContent=res.output.map(x=>x.data).join('\n') || 'Code executed successfully.';for(const img of res.images){const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;canvas.getContext('2d').drawImage(img,0,0);$('plots').append(canvas);if(img.close)img.close()}}catch(e){$('output').textContent='R error: '+(e.message||e);if(!webR)pending=null}finally{if(shelter)await shelter.purge();busy=false;$('run').disabled=false}};
+loadData();
+</script>
+</body>
+</html>
